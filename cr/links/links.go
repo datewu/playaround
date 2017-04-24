@@ -1,0 +1,68 @@
+// Package links provides a link-extraction function.
+package links
+
+import (
+	"fmt"
+	"net/http"
+
+	"golang.org/x/net/html"
+)
+
+var client http.Client
+
+// Extract makes an HTTP GET request to the specified URL, parses
+// the response as HTML, and returns the links in the HTML document.
+func Extract(url string) ([]string, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("User-Agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 9_1 like Mac OS X) AppleWebKit/601.1.46 (KHTML, like Gecko) Version/9.0 Mobile/13B143 Safari/601.1")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
+		return nil, fmt.Errorf("getting %s: %s", url, resp.Status)
+	}
+	defer resp.Body.Close()
+	doc, err := html.Parse(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("parsing %s as HTML: %v", url, err)
+	}
+	var links []string
+	visitNode := func(n *html.Node) {
+		if n.Type == html.ElementNode && n.Data == "a" {
+			for _, a := range n.Attr {
+				if a.Key != "href" {
+					continue
+				}
+				link, err := resp.Request.URL.Parse(a.Val)
+				if err != nil {
+					continue // ignore bad URLs
+				}
+				links = append(links, link.String())
+			}
+		}
+	}
+	forEachNode(doc, visitNode, nil)
+	return links, nil
+}
+
+// forEachNode calls the functions pre(x) and post(x) for each node
+// x in the tree rooted at n. Both functions are optional.
+// pre is called before the children are visited (preorder) and
+// post is called after (postorder)
+func forEachNode(n *html.Node, pre, post func(n *html.Node)) {
+	if pre != nil {
+		pre(n)
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		forEachNode(c, pre, post)
+	}
+	if post != nil {
+		post(n)
+	}
+}
