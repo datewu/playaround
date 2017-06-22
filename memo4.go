@@ -3,6 +3,7 @@
 package memo
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 	"sync"
@@ -28,11 +29,23 @@ type result struct {
 	err   error
 }
 
-func New(f Func) *Memo {
-	return &Memo{f: f, cache: make(map[string]*entry)}
+func New(f Func, ctx context.Context) *Memo {
+	m := &Memo{f: f, cache: make(map[string]*entry)}
+	go func() {
+		if can := <-ctx.Done(); can != nil {
+			m.clear()
+		}
+	}()
+	return m
 }
 
-// NOTE: not concurrency-safe!
+// clear all cache entry
+func (m *memo) clear() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.cache = make(map[string]*entry)
+}
+
 func (m *Memo) Get(key string) (interface{}, error) {
 	m.mu.Lock()
 	e := m.cache[key]

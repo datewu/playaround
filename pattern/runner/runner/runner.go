@@ -1,10 +1,10 @@
 package runner
 
 import (
+	"context"
 	"errors"
 	"os"
 	"os/signal"
-	"time"
 )
 
 // Runner runs a set of tasks within a given timeout and can be
@@ -16,7 +16,7 @@ type Runner struct {
 
 	complete chan error
 
-	timeout <-chan time.Time
+	c context.Context
 
 	tasks []func(int)
 }
@@ -28,11 +28,11 @@ var ErrTimeout = errors.New("received timeout")
 var ErrInterrupt = errors.New("received interrupt")
 
 // New returns a new ready-o-use Runner.
-func New(d time.Duration) *Runner {
+func New(ctx context.Context) *Runner {
 	return &Runner{
 		interrupt: make(chan os.Signal, 1),
 		complete:  make(chan error),
-		timeout:   time.After(d),
+		c:         ctx,
 	}
 }
 
@@ -54,7 +54,7 @@ func (r *Runner) Start() error {
 	case err := <-r.complete:
 		return err
 
-	case <-r.timeout:
+	case <-r.c.Done():
 		return ErrTimeout
 
 	}

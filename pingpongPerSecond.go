@@ -5,27 +5,30 @@ import (
 	"time"
 )
 
-type l struct{}
-
-var (
-	pp    = make(chan string)
-	count int64
-)
-
 func main() {
-	// ping
+	var pp = make(chan int)
+	go func() {
+		pp <- 0
+	}()
+
+	t := time.Now()
+	var count int
 	go func() {
 		for {
-			pp <- "ping"
+			m := <-pp
+			m++
+			pp <- m
+			count = m
 		}
 	}()
 
 	go func() {
 		for {
-			<-pp
-			count++
+			n := <-pp
+			n++
+			pp <- n
 		}
 	}()
 	time.Sleep(1 * time.Second)
-	fmt.Println(count)
+	fmt.Println(count, time.Since(t))
 }

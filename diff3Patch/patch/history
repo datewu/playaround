@@ -1,0 +1,26 @@
+ 7815  mkdir patch
+ 7816  cd patch
+ 7817  vi hello.c
+ 7818  cp hello.c hello_new.c
+ 7819  vi hello_new.c
+ 7820  cat hello_new.c
+ 7821  cat hello.c
+ 7822  man diff3
+ 7823  man diff
+ 7824  diff -u hello.c hello_new.c
+ 7825  ls
+ 7826  ls -ahl 
+ 7827  diff -u hello.c hello_new.c
+ 7828  cat hello.c
+ 7829  cat hello_new.c
+ 7830  diff -u hello.c hello_new.c > hello.patch
+ 7831  cat hello.patch
+ 7832  cat hello.
+ 7833  cat hello.c
+ 7834  patch < hello.patch
+ 7835  cat hello.
+ 7836  cat hello.c
+ 7837  diff -u hello.c hello_new.c 
+ 7838  patch -R < hello.patch
+ 7839  diff -u hello.c hello_new.c 
+ 7840  cat hello.c

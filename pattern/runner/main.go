@@ -1,16 +1,21 @@
 package main
 
 import (
+	"context"
 	"log"
 	"time"
 
 	"./runner"
 )
 
+const timeout = 3 * time.Second
+
 func main() {
 	log.Println("starting work.")
+	ctx, canncel := context.WithTimeout(context.Background(), timeout)
+	defer canncel()
 
-	r := runner.New(timeout)
+	r := runner.New(ctx)
 
 	r.Add(createTask(), createTask(), createTask(), createTask())
 
@@ -24,8 +29,6 @@ func main() {
 	}
 	log.Println("Process ended。")
 }
-
-const timeout = 30 * time.Second
 
 func createTask() func(int) {
 	return func(id int) {

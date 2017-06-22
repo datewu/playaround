@@ -1,8 +1,13 @@
 package main
 
-import "net/http"
+import (
+	"log"
+	"net/http"
+)
 
 func main() {
+	port := ":8090"
 	http.Handle("/", http.FileServer(http.Dir(".")))
-	http.ListenAndServe("localhost:8090", nil)
+	log.Println("listen on", port)
+	http.ListenAndServe(port, nil)
 }

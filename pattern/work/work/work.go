@@ -10,7 +10,7 @@ type Worker interface {
 }
 
 // Pool provides a pool of goroutines that can execute any Worker
-// tasks that are submittexd.
+// tasks that are submitted.
 type Pool struct {
 	work chan Worker
 	wg   sync.WaitGroup

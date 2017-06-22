@@ -1,4 +1,4 @@
-// Package pool manages a user defined set od resources.
+// Package pool manages a user defined set of resources.
 package pool
 
 import (
@@ -61,9 +61,9 @@ func (p *Pool) Release(r io.Closer) {
 
 	select {
 	case p.resources <- r:
-		log.Println("Release:", "In Queur")
+		log.Println("Release:", "to Queue")
 	default:
-		log.Println("Release:", "Closing")
+		log.Println("Release:", "Closing, the Queue seems to be full")
 		r.Close()
 	}
 }
