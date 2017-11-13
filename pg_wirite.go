@@ -32,6 +32,7 @@ import (
 
 var (
 	runfor     = flag.Duration("r", 30*time.Second, "duration of time to run")
+	con        = flag.Int("c", 50, "concurrent")
 	tcpAddress = flag.String("address", "127.0.0.1:5432", "<addr>:<port> to connect to nsqd")
 	size       = flag.Int("size", 10, "size of messages")
 )
@@ -67,8 +68,8 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	wg.Add(50)
-	for j := 0; j < 50; j++ {
+	wg.Add(*con)
+	for j := 0; j < *con; j++ {
 		go func() {
 			writePG(*runfor, stmt, data, rdyChan, goChan)
 			wg.Done()
@@ -86,8 +87,9 @@ func main() {
 		float64(tmc)/duration.Seconds(),
 		float64(duration/time.Microsecond)/float64(tmc))
 }
+
 func initInsert() (stmt *sql.Stmt, err error) {
-	uri := "postgres://lol:dota@localhost/yace?sslmode=disable"
+	uri := "postgres://lol:dota@" + *tcpAddress + "/yace?sslmode=disable"
 	db, err := sql.Open("postgres", uri)
 	if err != nil {
 		return
