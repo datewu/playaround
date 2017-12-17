@@ -1,80 +1,80 @@
-// Package bank provides a concurrency-safe bank with one account.
 package main
 
 import (
+	"fmt"
 	"log"
+	"sync"
 	"time"
 )
-
-func main() {
-	log.Println("Get balance", Balance())
-	Deposit(150)
-	log.Println("Deposit 150", Balance())
-
-	go Withdraw(10)
-	go Withdraw(10)
-	go Withdraw(10)
-	go Withdraw(10)
-	go Withdraw(10)
-	go Withdraw(10)
-	go Withdraw(20)
-	go Withdraw(30)
-	go Withdraw(40)
-	go Withdraw(50)
-	go Withdraw(60)
-	go Withdraw(80)
-	time.Sleep(3 * time.Second)
-
-}
 
 var (
 	deposits = make(chan int) // send amount to deposit
 	balances = make(chan int) // receive balance
-	withdraw = make(chan wa)
+	withdraw = make(chan wd)
 )
 
-type wa struct {
+type wd struct {
 	amount int
 	c      chan bool
 }
 
+// Withdraw amount
 func Withdraw(amount int) {
-	newWa := wa{amount, make(chan bool)}
-	withdraw <- newWa
-	if <-newWa.c {
-		log.Println("success withdraw:", amount, "reamin:", Balance())
+	newWd := wd{amount, make(chan bool)}
+	withdraw <- newWd
+	if <-newWd.c {
+		fmt.Println("success withdrwa:", amount, "remain:", Balance())
 		return
 	}
-	log.Println("failed durning withdraw:", amount, "reamin:", Balance())
+	log.Println("failed during withdraw:", amount, "remain:", Balance())
 }
 
+// Deposit amount
 func Deposit(amount int) {
 	deposits <- amount
 }
 
+// Balance get the balance
 func Balance() int {
 	return <-balances
 }
 
 func teller() {
-	var balance int // balance is confined to teller goroutine
+	var b int // b is confined to teller goroutine
 	for {
 		select {
 		case amount := <-deposits:
-			balance += amount
-		case balances <- balance:
-			// nothing
+			b += amount
+		case balances <- b:
 		case w := <-withdraw:
-			if w.amount <= balance {
-				balance -= w.amount
+			if w.amount <= b {
+				b -= w.amount
 				w.c <- true
-				break // NOTE: cannot use return
+			} else {
+				w.c <- false
 			}
-			w.c <- false
 		}
+
 	}
 }
 
-func init() {
+func main() {
 	go teller()
+
+	log.Println("Get blance", Balance())
+	Deposit(150)
+	log.Println("Deposit 150", Balance())
+
+	var wg sync.WaitGroup
+	wg.Add(10)
+	for i := 0; i < 10; i++ {
+		go func(amount int) {
+			Withdraw(3 + 10*amount)
+			time.Sleep(200 * time.Millisecond)
+			wg.Done()
+		}(i)
+	}
+
+	wg.Wait()
+	fmt.Println("done")
 }
