@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"math/rand"
@@ -16,25 +17,21 @@ const (
 	pooledResources = 20
 )
 
-type dbConnection struct {
-	ID int32
-}
+type dbConnection struct{ ID int32 }
 
-// Close implements the io.Closer interface so dbConnection
+// Close implements the io.Closer intrface so dbConnection
 // can be managed by the pool. Close performs any resource
 // release management.
-func (dbConn *dbConnection) Close() error {
-	log.Println("Close: Connection", dbConn.ID)
+func (d *dbConnection) Close() error {
+	log.Println("Close: Connection:", d.ID)
 	return nil
 }
 
-// idCounter provides support for giving each connection a unique id.
 var idCounter int32
 
 func createConnection() (io.Closer, error) {
 	id := atomic.AddInt32(&idCounter, 1)
 	log.Println("Create: New Connection", id)
-
 	return &dbConnection{id}, nil
 }
 
@@ -53,11 +50,11 @@ func main() {
 			wg.Done()
 		}(query)
 	}
-
 	wg.Wait()
 
-	log.Println("Shutdown Program.")
+	fmt.Println("Shutdown Pool.")
 	p.Close()
+	fmt.Println("Done")
 }
 
 func performQueries(query int, p *pool.Pool) {
@@ -68,5 +65,5 @@ func performQueries(query int, p *pool.Pool) {
 	defer p.Release(conn)
 
 	time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
-	log.Printf("QID[%d] CID[%d]\n", query, conn.(*dbConnection).ID)
+	fmt.Printf("QID[%d] CID[%d]\n", query, conn.(*dbConnection).ID)
 }

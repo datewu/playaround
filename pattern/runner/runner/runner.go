@@ -7,27 +7,23 @@ import (
 	"os/signal"
 )
 
-// Runner runs a set of tasks within a given timeout and can be
-// shut down on an operating system interrupt.
+// Runner runs a sert of tasks within a given timeout and can be
+// shutdown on an operating system interrupt.
 type Runner struct {
-	// interrupt channel reports a signal from the
-	// operating system.
+	// interrupt channel reports a singal from the os.
 	interrupt chan os.Signal
-
-	complete chan error
-
-	c context.Context
-
-	tasks []func(int)
+	complete  chan error
+	c         context.Context
+	tasks     []func(int)
 }
 
-// ErrTimeout is returned when a values is received on the timeout.
-var ErrTimeout = errors.New("received timeout")
+// ErrTimeout is returned when a value is received on the timeout.
+var ErrTimeout = errors.New("reveived timeout")
 
-// ErrInterrupt is returned when an event from the OS is received.
+// ErrInterrupt is returned when an event from the os is received.
 var ErrInterrupt = errors.New("received interrupt")
 
-// New returns a new ready-o-use Runner.
+// New returns a new ready-to-use Runner.
 func New(ctx context.Context) *Runner {
 	return &Runner{
 		interrupt: make(chan os.Signal, 1),
@@ -36,8 +32,7 @@ func New(ctx context.Context) *Runner {
 	}
 }
 
-// Add attaches tasks to the Runner. A task is a function that
-// takes a int ID.
+// Add attaches tasks to the Runner. A task is a function that takes a int ID.
 func (r *Runner) Add(tasks ...func(int)) {
 	r.tasks = append(r.tasks, tasks...)
 }
@@ -53,26 +48,21 @@ func (r *Runner) Start() error {
 	select {
 	case err := <-r.complete:
 		return err
-
 	case <-r.c.Done():
 		return ErrTimeout
-
 	}
 }
 
-// run executes each registered task.
 func (r *Runner) run() error {
 	for id, task := range r.tasks {
 		if r.gotInterrupt() {
 			return ErrInterrupt
 		}
-
 		task(id)
 	}
 	return nil
 }
 
-// gotInterrupt verifies if the interrupt signal has been issued.
 func (r *Runner) gotInterrupt() bool {
 	select {
 	case <-r.interrupt:

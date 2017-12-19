@@ -25,7 +25,7 @@ func main() {
 	}
 }
 
-type client chan<- string // an outgoing message channel
+type client chan<- string // an outgoning message channel
 var (
 	entering = make(chan client)
 	leaving  = make(chan client)
@@ -33,12 +33,12 @@ var (
 )
 
 func broadcaster() {
-	clients := make(map[client]bool) // all connected clients
+	clients := make(map[client]bool)
 	for {
 		select {
 		case msg := <-messages:
 			// Broadcast incoming message to all
-			// clients' outgoing message channel.
+			// client's outgoing message channel.
 			for cli := range clients {
 				cli <- msg
 			}
@@ -57,6 +57,7 @@ func handleConn(conn net.Conn) {
 
 	who := conn.RemoteAddr().String()
 	ch <- "You are " + who
+
 	messages <- who + " has arrived"
 	entering <- ch
 
@@ -64,15 +65,15 @@ func handleConn(conn net.Conn) {
 	for input.Scan() {
 		messages <- who + ": " + input.Text()
 	}
-	// NOTE: ignoring potential errors from input.Err()
+	// NOTE: ignore potential errors from input.err()
 
 	leaving <- ch
 	messages <- who + " has left"
 	conn.Close()
 }
 
-func clientWriter(conn net.Conn, ch <-chan string) {
+func clientWriter(c net.Conn, ch <-chan string) {
 	for msg := range ch {
-		fmt.Fprintln(conn, msg) // Note: ignoring network errors.
+		fmt.Fprintln(c, msg)
 	}
 }

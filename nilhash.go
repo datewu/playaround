@@ -20,11 +20,19 @@ func main() {
 	h["pop"] = 3
 	fmt.Println(h)
 	//h = nil
-	//h["dota"] = 999
+	h["dota"] = 999
+	fmt.Println(h)
+	h = nil
+	//h["dota"] = 996
+	fmt.Println(h)
 	json.Unmarshal([]byte(j), &h)
 	json.Unmarshal([]byte(k), &h)
 	json.Unmarshal([]byte(m), &h)
+	h["dota"] = 996
 	fmt.Println(h)
+	fmt.Println("++++++++++++++")
+
+	fmt.Println(graph)
 	fmt.Println(graph["lol"])
 	fmt.Println(graph["lol"]["dd"])
 	fmt.Println(d["ddd"])

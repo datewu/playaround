@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"sync"
 	"time"
 
@@ -9,12 +9,12 @@ import (
 )
 
 var names = []string{
-	"steve",
-	"bob",
-	"mary",
-	"therese",
-	"jason",
-	"rack",
+	"steve blown",
+	"bob green",
+	"marry ch",
+	"the reverse flash",
+	"rack dave",
+	"willion well",
 }
 
 type namePrinter struct {
@@ -22,28 +22,27 @@ type namePrinter struct {
 }
 
 func (n *namePrinter) Task() {
-	log.Println(n.name)
 	time.Sleep(time.Second)
+	fmt.Println(n.name)
 }
 
 func main() {
-	p := work.New(2)
+	p := work.New(200)
 
 	var wg sync.WaitGroup
 	wg.Add(100 * len(names))
 
 	for i := 0; i < 100; i++ {
 		for _, v := range names {
-			np := namePrinter{
-				v,
-			}
+			np := namePrinter{v}
 			go func() {
 				p.Run(&np)
 				wg.Done()
 			}()
 		}
 	}
-	log.Println("dispatch DONE", "LOL")
+	fmt.Println("dispatch Done, LOL")
 	wg.Wait()
 	p.Shutdown()
+	fmt.Println("tasks Done")
 }

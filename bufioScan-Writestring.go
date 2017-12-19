@@ -9,27 +9,24 @@ import (
 
 func main() {
 	if len(os.Args) != 3 {
-		log.Fatalln("need two paramters, but got", len(os.Args)-1)
+		log.Fatalln("need two paramters, got", len(os.Args)-1)
 	}
-	in := os.Args[1]
-	salt := os.Args[2]
-	add(in, in+".new", salt+"x")
+	in, salt := os.Args[1], os.Args[2]
 
-	fmt.Println("good luck")
+	log.Println(add(in, in+".new", salt+"x"))
+	fmt.Println("Good Luck")
 }
 
 func add(in, out, salt string) (err error) {
 	source, err := os.Open(in)
 	if err != nil {
-		log.Println(err)
-		return err
+		return
 	}
 	defer source.Close()
 
 	result, err := os.Create(out)
 	if err != nil {
-		log.Println(err)
-		return err
+		return
 	}
 	defer result.Close()
 
@@ -39,16 +36,18 @@ func add(in, out, salt string) (err error) {
 	scanner.Split(bufio.ScanLines)
 	scanner.Scan() // skip the first line
 	_, err = w.WriteString(scanner.Text() + "\n")
+
 	for scanner.Scan() {
-		lineString := scanner.Text()
-		if lineString[0] != '<' {
-			lineString = salt + lineString
+		line := scanner.Text()
+		if len(line) > 0 && line[0] != '<' {
+			line += salt
 		}
-		_, err = w.WriteString(lineString + "\n")
+		_, err = w.WriteString(line + "\n")
 		if err != nil {
 			return
 		}
 	}
+	w.Flush()
 	err = scanner.Err()
 	return
 }

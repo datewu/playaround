@@ -1,17 +1,17 @@
 package main
 
-import (
-	"fmt"
-	"os"
-	"runtime"
-)
+import "runtime"
+import "os"
+import "fmt"
 
 func main() {
 	printStack()
-	fmt.Println("LOL")
+	fmt.Println("++++++++++++++++++")
 	defer printStack()
 	f(3)
+
 }
+
 func printStack() {
 	var buf [4096]byte
 	n := runtime.Stack(buf[:], false)

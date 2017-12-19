@@ -10,35 +10,34 @@ import (
 	"time"
 )
 
-var verbose = flag.Bool("v", false, "show verbose progress messages")
-var sema = make(chan struct{}, 200)
-var done = make(chan struct{})
+var (
+	verbose = flag.Bool("v", false, "show verbosr progress messages")
+	sema    = make(chan struct{}, 2000)
+	done    = make(chan struct{})
+)
 
-// walkDir recursively walks the file tree rooted at dir
-// and sends the size of each found file on fileSizes.
-func walkDir(dir string, n *sync.WaitGroup, fileSizes chan<- int64) {
+func walkDir(dir string, n *sync.WaitGroup, fileSize chan<- int64) {
 	defer n.Done()
 	if cancelled() {
 		return
 	}
+
 	for _, entry := range dirents(dir) {
 		if entry.IsDir() {
 			n.Add(1)
 			subdir := filepath.Join(dir, entry.Name())
-			walkDir(subdir, n, fileSizes)
+			walkDir(subdir, n, fileSize)
 		} else {
-			fileSizes <- entry.Size()
+			fileSize <- entry.Size()
 		}
 	}
 }
 
-// dirents returns the entries of directory dir.
 func dirents(dir string) []os.FileInfo {
 	select {
 	case sema <- struct{}{}:
 	case <-done:
 		return nil
-
 	}
 	defer func() {
 		<-sema
@@ -46,15 +45,26 @@ func dirents(dir string) []os.FileInfo {
 
 	entries, err := ioutil.ReadDir(dir)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "du: %v\n", err)
+		fmt.Fprintln(os.Stderr, "du: ", err)
 		return nil
 	}
 	return entries
+}
 
+func cancelled() bool {
+	select {
+	case <-done:
+		return true
+	default:
+		return false
+	}
+}
+
+func printDiskUsage(nfiles, nbytes int64) {
+	fmt.Printf("%d files %.1f GB\n", nfiles, float64(nbytes)/1e9)
 }
 
 func main() {
-	// Determine the initial directories.
 	flag.Parse()
 	roots := flag.Args()
 	if len(roots) == 0 {
@@ -66,60 +76,49 @@ func main() {
 		close(done)
 	}()
 
-	// Traverse the file tree.
 	fileSizes := make(chan int64)
-	var n sync.WaitGroup
+
+	var wg sync.WaitGroup
+	wg.Add(len(roots))
 	go func() {
 		for _, root := range roots {
-			n.Add(1)
-			go walkDir(root, &n, fileSizes)
+			go walkDir(root, &wg, fileSizes)
 		}
+
 		go func() {
-			n.Wait()
+			wg.Wait()
 			close(fileSizes)
 		}()
-
 	}()
 
-	// Print the results periodically.
-	var tick <-chan time.Time
+	display(fileSizes)
 
+}
+
+func display(fileSize <-chan int64) {
+	var tick <-chan time.Time
 	if *verbose {
-		tick = time.Tick(400 * time.Millisecond)
+		tick = time.Tick(499 * time.Microsecond)
 	}
+
 	var nfiles, nbytes int64
+
 loop:
 	for {
 		select {
 		case <-done:
-			// Drain fileSizes to allow existing goroutines to finish.
-			for range fileSizes {
-				// Do nothing
+			for range fileSize {
 			}
 			return
-		case size, ok := <-fileSizes:
+		case size, ok := <-fileSize:
 			if !ok {
-				break loop // fileSizes was closed
+				break loop // fileSize was closed
 			}
 			nfiles++
 			nbytes += size
 		case <-tick:
-			pritDiskUsage(nfiles, nbytes)
+			printDiskUsage(nfiles, nbytes)
 		}
 	}
-	pritDiskUsage(nfiles, nbytes)
-}
-
-func pritDiskUsage(nfiles, nbytes int64) {
-	fmt.Printf("%d files %.1f GB\n", nfiles, float64(nbytes)/1e9)
-
-}
-
-func cancelled() bool {
-	select {
-	case <-done:
-		return true
-	default:
-		return false
-	}
+	printDiskUsage(nfiles, nbytes)
 }

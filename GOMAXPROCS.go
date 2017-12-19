@@ -8,5 +8,3 @@ func main() {
 		fmt.Print(1)
 	}
 }
-
-//GOMAXPROCS=2 go run GOMAXPROCS.go

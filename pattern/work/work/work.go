@@ -3,8 +3,7 @@ package work
 
 import "sync"
 
-// Worker must be implemented by types that want to use
-// the work pool.
+// Worker must be implemented by tyoes that want to use the work pool.
 type Worker interface {
 	Task()
 }

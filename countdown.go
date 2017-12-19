@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"time"
 )
@@ -13,20 +14,19 @@ func main() {
 		abort <- struct{}{}
 	}()
 
-	fmt.Println("Commencing countdown.")
+	fmt.Println("Comming coundown")
 	tick := time.Tick(time.Second)
-	for countdown := 10; countdown > 0; countdown-- {
-		fmt.Println(countdown)
+	for i := 0; i < 10; i++ {
+		fmt.Println(i)
 		select {
 		case <-tick:
 		case <-abort:
-			fmt.Println("Launch aborted")
+			log.Println("Launch aborted")
 			return
 		}
 	}
 	launch()
 }
-
 func launch() {
 	fmt.Println("WoW")
 }

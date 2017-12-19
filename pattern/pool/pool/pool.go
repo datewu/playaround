@@ -1,10 +1,9 @@
-// Package pool manages a user defined set of resources.
 package pool
 
 import (
 	"errors"
+	"fmt"
 	"io"
-	"log"
 	"sync"
 )
 
@@ -14,16 +13,16 @@ import (
 type Pool struct {
 	m         sync.Mutex
 	resources chan io.Closer
+	hold      chan struct{}
 	factory   func() (io.Closer, error)
 	closed    bool
 }
 
 // ErrPoolClosed is returned when an Acquire returns on a closed pool.
-var ErrPoolClosed = errors.New("pool has been closed")
+var ErrPoolClosed = errors.New("Pool has been closed")
 
 // New creates a pool that manages resources. A pool requires a function
-// that can allocate a new resource and the size of
-// the pool
+// that can allocate a new resource and the size of the pool.
 func New(fn func() (io.Closer, error), size uint) (*Pool, error) {
 	if size <= 0 {
 		return nil, errors.New("size value too small")
@@ -31,20 +30,21 @@ func New(fn func() (io.Closer, error), size uint) (*Pool, error) {
 	return &Pool{
 		factory:   fn,
 		resources: make(chan io.Closer, size),
+		hold:      make(chan struct{}, size),
 	}, nil
 }
 
-// Acquire retrieves a resource form the pool.
+// Acquire retrieves a resource from the pool.
 func (p *Pool) Acquire() (io.Closer, error) {
 	select {
 	case r, ok := <-p.resources:
-		log.Println("Acquire:", "Share Resource")
+		fmt.Println("Acquire:", "Share Resource")
 		if !ok {
 			return nil, ErrPoolClosed
 		}
 		return r, nil
-	default:
-		log.Println("Acquire:", "New Resource")
+	case p.hold <- struct{}{}:
+		fmt.Println("Acquire:", "New Resource")
 		return p.factory()
 	}
 }
@@ -61,9 +61,9 @@ func (p *Pool) Release(r io.Closer) {
 
 	select {
 	case p.resources <- r:
-		log.Println("Release:", "to Queue")
+		fmt.Println("Release:", "to Queue")
 	default:
-		log.Println("Release:", "Closing, the Queue seems to be full")
+		fmt.Println("Release:", "Closing, the Queue seems to be full")
 		r.Close()
 	}
 }
@@ -79,8 +79,4 @@ func (p *Pool) Close() {
 	p.closed = true
 
 	close(p.resources)
-
-	for r := range p.resources {
-		r.Close()
-	}
 }

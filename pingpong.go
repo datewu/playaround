@@ -6,52 +6,29 @@ import (
 )
 
 func main() {
-	var p = make(chan int)
-	var q = make(chan int)
-	var n int
+	var (
+		p = make(chan struct{})
+		n int64
+	)
+
 	go func() {
-		p <- 1
+		p <- struct{}{}
+	}()
+
+	go func() {
+		for {
+			<-p
+			n++
+		}
+	}()
+	go func() {
+		for {
+			p <- struct{}{}
+			//	n++
+		}
 	}()
 
 	t := time.Now()
-
-	go func() {
-		for {
-
-			<-p
-			n++
-			q <- 1
-		}
-	}()
-	go func() {
-		for {
-			<-q
-			n++
-			p <- 1
-		}
-	}()
 	time.Sleep(time.Second)
 	fmt.Println(n, time.Since(t))
-	/*
-		var tick = time.Tick(time.Second)
-		time.Sleep(990 * time.Millisecond)
-		for {
-			select {
-			case <-p:
-				go func() {
-					q <- 1
-					n++
-				}()
-
-			case <-q:
-				go func() {
-					p <- 1
-					n++
-				}()
-			case <-tick:
-				fmt.Println(n, time.Since(t))
-				os.Exit(0)
-			}
-		}
-	*/
 }

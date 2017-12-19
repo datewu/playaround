@@ -1,30 +1,32 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func main() {
-	ch := make(chan int)
-	go Generate(ch)
-	for i := 0; i < 20; i++ {
-		prime := <-ch
-		fmt.Println(i+1, prime)
-		ch1 := make(chan int)
-		go Filter(ch, ch1, prime)
-		ch = ch1
+	source := make(chan int)
+	go generate(source)
+	for i := 1; i < 10; i++ {
+		prime := <-source
+		fmt.Println(i, prime)
+		filterSource := make(chan int)
+		go filter(source, filterSource, prime)
+		source = filterSource
 	}
 }
 
-func Generate(ch chan<- int) {
+func generate(output chan<- int) {
 	for i := 2; ; i++ {
-		ch <- i
+		output <- i
 	}
 }
 
-func Filter(in <-chan int, out chan<- int, prime int) {
+func filter(in <-chan int, out chan<- int, prime int) {
 	for {
-		i := <-in
-		if i%prime != 0 {
-			out <- i
+		number := <-in
+		if number%prime != 0 {
+			out <- number
 		}
 	}
 }

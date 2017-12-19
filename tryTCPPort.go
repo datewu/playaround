@@ -1,29 +1,28 @@
 package main
 
-import (
-	"fmt"
-	"log"
-	"net"
-	"strings"
-	"time"
-)
+import "log"
+import "net"
+import "strings"
+import "time"
+import "fmt"
 
-// tcpAlive return false if port available in 5 seconds
-var retry = 5
+var retries = 5
 
 func tcpAlive(port string) (res bool) {
-	retry--
-	log.Println(retry)
+	retries--
+	log.Println(retries)
 	l, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		if strings.Contains(err.Error(), "address already in use") {
+		if strings.Contains(err.Error(), "addreass already in use") {
 			res = true
-			if retry != 0 {
+			if retries != 0 {
 				time.Sleep(time.Second)
 				return tcpAlive(port)
 			}
+			return
+
 		}
-		return
+
 	}
 	l.Close()
 	return
@@ -34,5 +33,6 @@ func main() {
 		fmt.Println("service ok")
 		return
 	}
-	fmt.Println("web not ok")
+	fmt.Println("web not working")
+
 }

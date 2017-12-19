@@ -1,34 +1,26 @@
 package main
 
-import (
-	"fmt"
-	"log"
-	"net/http"
-	"sync"
-	"time"
-)
-
-var wg sync.WaitGroup
-var a = []int{2, 34, 5, 6, 7, 8}
+import "sync"
+import "fmt"
+import "time"
 
 func main() {
-	go log.Println(http.ListenAndServe(":80", nil))
-	go wgTest()
-	log.Println(http.ListenAndServe(":8099", nil))
-}
+	var (
+		a  = []int{23, 5, 6, 70, 173, 200, 180, 170, 190, 45, 62, 98}
+		wg sync.WaitGroup
+	)
 
-func wgTest() {
-	time.Sleep(time.Second)
 	wg.Add(len(a))
 	for _, v := range a {
-		go worker(v)
+		go worker(&wg, v)
 	}
 	wg.Wait()
-	log.Println("exit wgTest")
+	fmt.Println("done")
 }
 
-func worker(p int) {
+func worker(wg *sync.WaitGroup, during int) {
 	defer wg.Done()
-	time.Sleep(1800 * time.Millisecond)
-	fmt.Println(p)
+	time.Sleep(time.Duration(10*during) * time.Millisecond)
+	fmt.Println(during)
+
 }
