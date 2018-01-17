@@ -1,0 +1,40 @@
+{
+	"dev": {
+		"host": {
+			"address": "localhost",
+			"port": 23
+		},
+		"warehouse": {
+			"host": "198.0.0.1",
+			"port": 2112
+		}
+	},
+	"stag": {
+		"host": {
+			"address": "localhost",
+			"port": 5799
+		},
+		"warehouse": {
+			"host": "198.0.0.1",
+			"port": 2112
+		},
+		"d": 34
+	},
+	"prod": {
+		"d": 23,
+		"host": {
+			"address": "localhost",
+			"port": 15
+		},
+		"datastore": {
+			"metric": {
+				"host": "127.0.0.1",
+				"port": 3099
+			},
+			"warehouse": {
+				"host": "198.0.0.1",
+				"port": 2112
+			}
+		}
+	}
+}
