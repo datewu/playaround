@@ -156,6 +156,12 @@ $@ (full target name of the current target)
 $? (returns the dependencies that are newer than the current target)
 $* (returns the text that corresponds to % in the target)
 $< (name of the first dependency)
+
+
+dep.o: dep.src config1.cfg config2.cfg
+    @echo the second preq is $(word 2,$^), the third is $(word 3,$^)
+
+
 $^ (name of all the dependencies with space as the delimiter)
 Instead of writing each of the file names in the actions and the target, we can use shorthand notations based on the above, to write more generic Makefiles.
 
