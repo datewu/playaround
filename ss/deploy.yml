@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: shadowsocks-libev
+  name: shadowsocks
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: ss-libev
+      name: ss
+    spec:
+      containers:
+      - image: shadowsocks/shadowsocks-libev
+        imagePullPolicy: IfNotPresent
+        name: ss
+        ports:
+        - name: tcp
+          containerPort: 8888
+        #  ss-server -s 0.0.0.0 -p 8388 -k "$(hostname)" -m aes-256-gcm -t 300 --fast-open -d "8.8.8.8,8.8.4.4" -u
+
+      # ENV SERVER_ADDR 0.0.0.0
+      # ENV SERVER_ADDR_IPV6 ::0
+      # ENV SERVER_PORT 8388
+      # ENV PASSWORD=
+      # ENV METHOD      aes-256-gcm
+      # ENV TIMEOUT     300
+      # ENV DNS_ADDRS    8.8.8.8,8.8.4.4
+      # ENV ARGS=
+
+      #   CMD exec ss-server \
+      # -s $SERVER_ADDR \
+      # -s $SERVER_ADDR_IPV6 \
+      # -p $SERVER_PORT \
+      # -k ${PASSWORD:-$(hostname)} \
+      # -m $METHOD \
+      # -t $TIMEOUT \
+      # --fast-open \
+      # -d $DNS_ADDRS \
+      # -u \
+      # $ARGS
+        command: 
+        - ss-server
+        - -s 0.0.0.0
+        - -s ::0
+        - -p 8888
+        - -k pass12345678
+        - -m aes-256-gcm
+        - -t 300
+        - --fast-open
+        - -d "8.8.8.8,8.8.4.4"
+        - -u
+        #args: 
+        readinessProbe:
+          tcpSocket:
+            port: 8888
+          timeoutSeconds: 5
+        livenessProbe:
+          tcpSocket:
+            port: 8888
+          initialDelaySeconds: 15
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ss-service
+spec:
+  ports:
+  - port: 80
+    targetPort: tcp
+  selector:
+    name: ss-libev

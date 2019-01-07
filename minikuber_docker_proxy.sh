@@ -4,7 +4,7 @@
 
 #Environment="DOCKER_RAMDISK=yes" "HTTP_PROXY=http://192.168.99.1:1087/" "HTTPS_PROXY=http://192.168.99.1:1087/"
 
-ip=`ifconfig| grep -E '\binet\b' | grep 10  | cut -d' ' -f 2`
+ip=`ifconfig| grep -E '\binet\b' |  grep -vE '127.0.0.1|192.168.99.1'  | cut -d' ' -f 2`
 line="Environment=\"DOCKER_RAMDISK=yes\" \"HTTP_PROXY=http://$ip:1087/\" \"HTTPS_PROXY=http://$ip:1087/\""
 
 #cat << EOF | ssh jd 
